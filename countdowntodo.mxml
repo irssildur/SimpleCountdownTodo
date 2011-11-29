@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+					   xmlns:s="library://ns.adobe.com/flex/spark"
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   width="1024" height="768" applicationComplete="init()"
+					   backgroundColor="#000000">
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import flash.events.*;
+			import flash.filesystem.*;
+			
+			
+			public var __str:String;
+			
+			public var __timeDifferencies:Array;
+			
+			private var __steps:Array;
+			private var __mytimer:Timer;
+			private var __timeIterator:int;
+			
+			private var __paused:Boolean;
+			
+			[Bindable]
+			public var __rtWidth:Number = 600;
+			//private var __pausedDelay
+			
+			
+			public function init():void
+			{
+				
+				
+				
+				__timeDifferencies = new Array();
+				
+				__steps = new Array();
+				__mytimer = null;
+				__timeIterator = 0;
+				
+				__paused = false;
+
+				__rtWidth = 600;
+				
+				rt1.text = "";
+				rt2.text = "";
+				rt3.text = "";
+				
+				loadFile();
+			}
+			
+			
+			
+			
+			
+			
+			public function loadFile():void
+			{
+			
+				var file:File = File.applicationDirectory.resolvePath("text.txt");
+				
+				var stream:FileStream = new FileStream();
+				
+				
+				stream.open(file, FileMode.READ);
+				__str = stream.readUTFBytes(stream.bytesAvailable);
+				stream.close();
+				//trace(str);
+				
+				processData();
+			}
+			
+			
+			private function processData():void
+			{
+				
+				var temp:Array = __str.split("\n");
+				
+				var times:Array = new Array();
+				
+				for each (var item:String in temp)
+				{
+					__steps.push(new Array(item.slice(0,8), item.slice(9)));
+				}
+				
+				for (var i:int = 0; i<__steps.length; i++)
+				{
+					var tempDate:Array = __steps[i][0].split(":");
+					
+					var date:Date = new Date();
+					date.hours = Number(tempDate[0]);
+					date.minutes = Number(tempDate[1]);
+					date.seconds = Number(tempDate[2]);
+					
+					times[i] = date;
+					trace(date.toTimeString());
+					
+					if (i>0)
+					{
+						
+						__timeDifferencies[i-1] = times[i]-times[i-1];
+					}
+				}
+				
+				
+				trace("times[0]", times[0]);
+				trace("times[1]", times[1]);
+				trace("times[1]-times[0]", times[2]-times[1]);
+				
+				
+				trace("timeDifferencies[0]", __timeDifferencies[1]);
+				
+				rt2.text = __steps[0][0] + " " + __steps[0][1];
+				rt3.text = __steps[1][0] + " " + __steps[1][1];
+				
+				
+			}
+			
+			
+			private function startBtnClicked(evt:MouseEvent):void
+			{
+				
+				startCount();
+				
+			}
+			
+			
+			private function startCount():void
+			{
+				
+				trace("startCount()");
+				if (!__paused)
+				{
+					__mytimer = new Timer(__timeDifferencies[__timeIterator], 1);
+					__mytimer.addEventListener(TimerEvent.TIMER_COMPLETE, timerComplete);
+					__paused = false;
+				}
+				__mytimer.addEventListener(TimerEvent.TIMER_COMPLETE, timerComplete);
+				__mytimer.start();
+			}
+			
+			
+			
+			private function timerComplete(evt:TimerEvent):void
+			{
+				trace("timerComplete()");
+				
+				evt.target.removeEventListener(TimerEvent.TIMER_COMPLETE, timerComplete);
+				
+				rt1.text = __steps[__timeIterator][1];
+				rt2.text = __steps[__timeIterator+1][1];
+				
+				if (__timeIterator +1 < __timeDifferencies.length)
+				{
+					rt3.text = __steps[__timeIterator+2][1];
+				}
+				else
+				{
+					rt3.text = "";
+				}
+				
+				
+				__timeIterator++;
+				
+				if (__timeIterator < __timeDifferencies.length)
+				{
+					
+					startCount();
+				}
+				
+				
+				
+			}
+			
+			
+			
+			private function pauseBtnClicked(evt:MouseEvent):void
+			{
+				if (__mytimer.running)
+				{
+					trace("Paused ", __mytimer.delay);
+					__paused = true;
+					__mytimer.stop();
+				}
+			}
+			
+			
+			
+			private function stopBtnClicked(evt:Event):void
+			{
+				__mytimer.stop();
+				init();
+			}
+			
+			
+			private function fullscreenBtnClicked(evt:Event):void
+			{
+				if (stage.displayState == StageDisplayState.NORMAL) {
+					stage.displayState = StageDisplayState.FULL_SCREEN;
+				} else {
+					stage.displayState = StageDisplayState.NORMAL;
+				}
+				
+			}
+			
+			
+			
+			
+		]]>
+	</fx:Script>
+	<s:Group>
+		<s:layout>
+			<s:HorizontalLayout/>
+			
+			
+		</s:layout>
+		<s:Group width="20%">
+			<s:layout>
+				<s:VerticalLayout/>
+				
+				
+			</s:layout>
+			<s:Button x="23" y="102" label="Start" mouseUp="startBtnClicked(event)"/>
+			<s:Button x="23" y="131" label="Pause" mouseUp="pauseBtnClicked(event)"/>
+			<s:Button x="23" y="160" label="Stop" mouseUp="stopBtnClicked(event)"/>
+			<s:Button x="23" y="160" label="FullScreen" mouseUp="fullscreenBtnClicked(event)"/>
+		</s:Group>
+	<s:Group width="80%">
+		<s:layout>
+			<s:VerticalLayout verticalAlign="middle"/>
+				
+			
+		</s:layout>
+	
+		<s:RichText id="rt1" x="201" y="0" width="{__rtWidth}" height="123" alpha="0.2" color="#FFFFFF"
+					fontSize="32" text="" textAlign="center" verticalAlign="middle" />
+	
+		<s:RichText id="rt2" x="201" y="181" width="{__rtWidth}" height="123" color="#FFFFFF" fontSize="32"
+					text="" textAlign="center" verticalAlign="middle"/>
+	
+		<s:RichText id="rt3" x="201" y="362" width="{__rtWidth}" height="123" alpha="0.2" color="#FFFFFF"
+					fontSize="32" text="" textAlign="center" verticalAlign="middle"/>
+	</s:Group>
+	
+		</s:Group>
+</s:WindowedApplication>

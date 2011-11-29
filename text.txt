@@ -1,0 +1,7 @@
+00:00:00 start
+00:00:05 5 másodperc
+00:00:10 10 másodperc
+00:00:12 12 másodperc
+00:00:20 20 másodperc
+00:00:25 25 másodperc
+00:00:35 35 másodperc
